@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useCallback, FormEvent } from 'react';
@@ -128,30 +128,25 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
     const fetchWeatherData = async () => {
       setLoading(true);
       setError(null);
-      setWeatherData(null);
-      setLocationData(null);
-      setAiAlert(null);
-      setLocationDetails(null);
       onLocationChange(location, null, true);
-
+  
       try {
-        const [locationRes, weatherRes] = await Promise.all([
-          fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.lat}&longitude=${location.lon}&localityLanguage=en`),
-          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`)
-        ]);
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`);
+        const locationRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lon}`);
 
-        if (!locationRes.ok || !weatherRes.ok) {
-          throw new Error('Failed to fetch weather or location data.');
+        if (!weatherRes.ok) {
+          throw new Error('Failed to fetch weather data.');
+        }
+        if (!locationRes.ok) {
+          throw new Error('Failed to fetch location data.');
         }
 
-        const locData = await locationRes.json();
         const weathData = await weatherRes.json();
+        const locData = await locationRes.json();
         
-        const fetchedLocationData = { city: locData.city || locData.locality, countryName: locData.countryName };
+        const fetchedLocationData = { city: locData.address.city || locData.address.town || locData.address.village, countryName: locData.address.country };
         setLocationData(fetchedLocationData);
-        onLocationChange(location, fetchedLocationData, false);
-
-
+  
         const current = weathData.current;
         const currentWeatherData: WeatherData = {
           temperature: Math.round(current.temperature_2m),
@@ -162,12 +157,13 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
         };
         setWeatherData(currentWeatherData);
         setLoading(false);
+        onLocationChange(location, fetchedLocationData, false);
         
-        return {locationData: fetchedLocationData, weatherData: currentWeatherData};
-
+        return { locationData: fetchedLocationData, weatherData: currentWeatherData };
+  
       } catch (e) {
         console.error(e);
-        setError("Could not fetch weather data. Please check your connection and try again.");
+        setError(e instanceof Error ? `Could not fetch data. ${e.message}` : "Could not fetch data. An unknown error occurred.");
         setLoading(false);
         onLocationChange(location, null, false);
         return null;
@@ -198,6 +194,10 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
         }
     };
     
+    setWeatherData(null);
+    setLocationData(null);
+    setAiAlert(null);
+    setLocationDetails(null);
     fetchWeatherData().then(data => {
         if(data) {
             fetchAIData(data.locationData, data.weatherData);
@@ -251,7 +251,7 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
         </CardHeader>
         <CardContent className="text-center px-4 sm:px-6">
           <div className="my-4">
-            <Icon className={`w-32 h-32 mx-auto text-primary ${animation}`} strokeWidth={1.5} />
+            <Icon className={'w-32 h-32 mx-auto text-primary ${animation}'} strokeWidth={1.5} />
           </div>
           <p className="text-7xl lg:text-8xl font-bold font-headline text-foreground">{weatherData.temperature}°C</p>
           <p className="text-xl text-muted-foreground capitalize mt-2">{description}</p>
