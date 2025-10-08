@@ -40,11 +40,6 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
   const [date, setDate] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    setDate(new Date());
-    requestGeolocation();
-  }, []);
-
   const resetState = useCallback(() => {
     setWeatherData(null);
     setLocationData(null);
@@ -59,7 +54,6 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
     setStatus('loading');
 
     try {
-      // Fetch weather and location in parallel
       const [weatherRes, locationRes] = await Promise.all([
         fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`),
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${loc.lat}&lon=${loc.lon}`)
@@ -71,7 +65,7 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
       const weatherJson = await weatherRes.json();
       const locationJson = await locationRes.json();
 
-      const fetchedLocationData = { city: locationJson.address.city || locationJson.address.town || locationJson.address.village, countryName: locationJson.address.country };
+      const fetchedLocationData = { city: locationJson.address.city || locationJson.address.town || locationJson.address.village || locationJson.address.county, countryName: locationJson.address.country };
       setLocationData(fetchedLocationData);
 
       const current = weatherJson.current;
@@ -87,7 +81,6 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
       setStatus('success');
       onLocationChange(loc, fetchedLocationData, false);
 
-      // Fetch AI data after successful primary data fetch
       setLoadingAIData(true);
       try {
         const locationString = `${fetchedLocationData.city}, ${fetchedLocationData.countryName}`;
@@ -104,7 +97,8 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
         setLocationDetails(locationDetailsResponse);
       } catch (aiError) {
         console.error("AI Data Fetch Error:", aiError);
-        // Don't set main status to error, just fail gracefully for AI parts
+        setAiAlert(null);
+        setLocationDetails(null);
       } finally {
         setLoadingAIData(false);
       }
@@ -118,31 +112,7 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
     }
   }, [onLocationChange, resetState]);
   
-  useEffect(() => {
-    if (location) {
-      fetchAllData(location);
-    }
-  }, [location, fetchAllData]);
-
-  const handleGeoError = (error: GeolocationPositionError) => {
-    let message = "An unknown error occurred while trying to get your location.";
-    switch (error.code) {
-      case error.PERMISSION_DENIED:
-        message = "Location access was denied. Please enable it or use the search bar.";
-        break;
-      case error.POSITION_UNAVAILABLE:
-        message = "Your location information is currently unavailable.";
-        break;
-      case error.TIMEOUT:
-        message = "The request to get your location timed out.";
-        break;
-    }
-    setErrorMessage(message);
-    setStatus('error');
-    onLocationChange(null, null, false);
-  };
-  
-  const requestGeolocation = () => {
+  const requestGeolocation = useCallback(() => {
     setStatus('loading');
     setErrorMessage(null);
     onLocationChange(null, null, true);
@@ -153,8 +123,28 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
             lat: position.coords.latitude,
             lon: position.coords.longitude,
           });
+          fetchAllData({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
         },
-        handleGeoError,
+        (error) => {
+          let message = "An unknown error occurred while trying to get your location.";
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              message = "Location access was denied. Please enable it or use the search bar.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              message = "Your location information is currently unavailable.";
+              break;
+            case error.TIMEOUT:
+              message = "The request to get your location timed out.";
+              break;
+          }
+          setErrorMessage(message);
+          setStatus('error');
+          onLocationChange(null, null, false);
+        },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
@@ -162,7 +152,13 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
       setStatus('error');
       onLocationChange(null, null, false);
     }
-  };
+  }, [fetchAllData, onLocationChange]);
+
+  useEffect(() => {
+    setDate(new Date());
+    requestGeolocation();
+  }, [requestGeolocation]);
+
 
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault();
@@ -180,7 +176,9 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
         throw new Error(`Could not find a location named "${searchQuery}".`);
       }
       const { latitude, longitude } = geoData.results[0];
-      setLocation({ lat: latitude, lon: longitude });
+      const newLocation = { lat: latitude, lon: longitude };
+      setLocation(newLocation);
+      await fetchAllData(newLocation);
     } catch (err) {
       const message = err instanceof Error ? err.message : "An unknown error occurred.";
       console.error(err);
@@ -279,12 +277,11 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
         </>
       );
     }
-    // Fallback for any unexpected state
     return <StatusDisplay icon={XCircle} title="An Error Occurred" message="Something went wrong. Please try again." onRetry={requestGeolocation} />;
   };
   
   return (
-    <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border rounded-2xl overflow-hidden">
+    <Card className="w-full h-full shadow-2xl bg-card/80 backdrop-blur-sm border rounded-2xl overflow-hidden">
       <div className="p-4 border-b">
         <form onSubmit={handleSearch} className="flex gap-2">
           <Input 
