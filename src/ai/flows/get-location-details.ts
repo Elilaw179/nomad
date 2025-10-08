@@ -43,7 +43,7 @@ const descriptionPrompt = ai.definePrompt({
   prompt: `Generate a brief, engaging, one-paragraph description for the following location: {{{location}}}. Focus on what makes it unique, like a famous landmark, its culture, or natural beauty.`,
 });
 
-const imagePrompt = ai.definePrompt({
+const imagePromptTemplate = ai.definePrompt({
   name: 'locationImagePrompt',
   input: {schema: GetLocationDetailsInputSchema},
   prompt: `A beautiful, vibrant, high-quality photograph of {{{location}}}. Cinematic, professional photography.`,
@@ -57,13 +57,15 @@ const getLocationDetailsFlow = ai.defineFlow(
     outputSchema: GetLocationDetailsOutputSchema,
   },
   async input => {
-    const [descriptionResult, imageResult] = await Promise.all([
-      descriptionPrompt(input),
-      ai.generate({
-        model: 'googleai/imagen-4.0-fast-generate-001',
-        prompt: (await imagePrompt(input)).output!,
-      }),
+    const [descriptionResult, imagePrompt] = await Promise.all([
+        descriptionPrompt(input),
+        imagePromptTemplate(input)
     ]);
+    
+    const imageResult = await ai.generate({
+        model: 'googleai/imagen-4.0-fast-generate-001',
+        prompt: imagePrompt.output!,
+    });
     
     const description = descriptionResult.output?.description || '';
     const imageUrl = imageResult.media.url;
