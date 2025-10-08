@@ -57,14 +57,14 @@ const getLocationDetailsFlow = ai.defineFlow(
     outputSchema: GetLocationDetailsOutputSchema,
   },
   async input => {
-    const [descriptionResult, imagePrompt] = await Promise.all([
-        descriptionPrompt(input),
-        imagePromptTemplate(input)
+    const [descriptionResult, imagePromptResult] = await Promise.all([
+      descriptionPrompt(input),
+      imagePromptTemplate(input)
     ]);
     
     const imageResult = await ai.generate({
         model: 'googleai/imagen-4.0-fast-generate-001',
-        prompt: imagePrompt.output!,
+        prompt: imagePromptResult.output!,
     });
     
     const description = descriptionResult.output?.description || '';
