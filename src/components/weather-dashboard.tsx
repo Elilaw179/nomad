@@ -2,15 +2,17 @@
 
 import * as React from 'react';
 import { useState, useEffect, useCallback, FormEvent } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MapPin, Wind, Droplets, AlertCircle, Loader2, XCircle, Search } from 'lucide-react';
 import { intelligentWeatherAlerts } from '@/ai/flows/intelligent-weather-alerts';
-import type { LocationData, WeatherData } from '@/lib/types';
+import { getLocationDetails } from '@/ai/flows/get-location-details';
+import type { LocationData, WeatherData, LocationDetails } from '@/lib/types';
 import { getWeatherInfo } from '@/lib/weather-utils';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import Image from 'next/image';
 
 const StatusDisplay = ({ icon, title, message, onRetry }: { icon: React.ElementType, title: string, message: string, onRetry?: () => void }) => (
     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-8 space-y-2">
@@ -26,8 +28,10 @@ export default function WeatherDashboard() {
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [aiAlert, setAiAlert] = useState<string | null>(null);
+  const [locationDetails, setLocationDetails] = useState<LocationDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingLocationDetails, setLoadingLocationDetails] = useState(false);
   const [date, setDate] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -86,6 +90,7 @@ export default function WeatherDashboard() {
     setWeatherData(null);
     setLocationData(null);
     setAiAlert(null);
+    setLocationDetails(null);
 
     try {
       const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${searchQuery}&count=1`);
@@ -113,6 +118,11 @@ export default function WeatherDashboard() {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
+      setWeatherData(null);
+      setLocationData(null);
+      setAiAlert(null);
+      setLocationDetails(null);
+
       try {
         const [locationRes, weatherRes] = await Promise.all([
           fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.lat}&longitude=${location.lon}&localityLanguage=en`),
@@ -126,7 +136,9 @@ export default function WeatherDashboard() {
         const locData = await locationRes.json();
         const weathData = await weatherRes.json();
         
-        setLocationData({ city: locData.city || locData.locality, countryName: locData.countryName });
+        const fetchedLocationData = { city: locData.city || locData.locality, countryName: locData.countryName };
+        setLocationData(fetchedLocationData);
+
         const current = weathData.current;
         const currentWeatherData: WeatherData = {
           temperature: Math.round(current.temperature_2m),
@@ -136,23 +148,30 @@ export default function WeatherDashboard() {
           isDay: current.is_day
         };
         setWeatherData(currentWeatherData);
-        
-        const historicalWeatherData = `The historical average temperature for ${locData.city} this time of year is around ${Math.round(current.temperature_2m + (Math.random() - 0.5) * 5)}°C with variable cloudiness.`;
-        const weatherInfo = getWeatherInfo(currentWeatherData.weatherCode, currentWeatherData.isDay);
+        setLoading(false);
 
-        const alertResponse = await intelligentWeatherAlerts({
-          currentWeather: weatherInfo.description,
-          temperature: currentWeatherData.temperature,
-          historicalWeatherData: historicalWeatherData,
-          location: `${locData.city}, ${locData.countryName}`
-        });
+        setLoadingLocationDetails(true);
+        const locationString = `${fetchedLocationData.city}, ${fetchedLocationData.countryName}`;
+
+        const [alertResponse, locationDetailsResponse] = await Promise.all([
+            intelligentWeatherAlerts({
+                currentWeather: getWeatherInfo(currentWeatherData.weatherCode, currentWeatherData.isDay).description,
+                temperature: currentWeatherData.temperature,
+                historicalWeatherData: `The historical average temperature for ${locationString} this time of year is around ${Math.round(current.temperature_2m + (Math.random() - 0.5) * 5)}°C with variable cloudiness.`,
+                location: locationString
+            }),
+            getLocationDetails({ location: locationString })
+        ]);
+
         setAiAlert(alertResponse.alertMessage);
+        setLocationDetails(locationDetailsResponse);
 
       } catch (e) {
         console.error(e);
         setError("Could not fetch weather data. Please check your connection and try again.");
-      } finally {
         setLoading(false);
+      } finally {
+        setLoadingLocationDetails(false);
       }
     };
 
@@ -240,6 +259,30 @@ export default function WeatherDashboard() {
             </Alert>
           )}
         </CardContent>
+        <CardFooter className="flex-col p-0">
+          {loadingLocationDetails ? (
+            <div className="p-6 w-full space-y-4">
+                <Skeleton className="h-48 w-full rounded-lg"/>
+                <Skeleton className="h-6 w-1/4"/>
+                <Skeleton className="h-4 w-full"/>
+                <Skeleton className="h-4 w-5/6"/>
+            </div>
+          ) : locationDetails && (
+            <div className="p-4 pt-0">
+              <Image 
+                src={locationDetails.imageUrl}
+                alt={`Image of ${locationData.city}`}
+                width={400}
+                height={250}
+                className="w-full h-auto rounded-lg object-cover mb-4 shadow-lg"
+              />
+              <div className="text-left">
+                <h4 className="font-bold text-lg text-foreground font-headline">About {locationData.city}</h4>
+                <p className="text-sm text-muted-foreground">{locationDetails.description}</p>
+              </div>
+            </div>
+          )}
+        </CardFooter>
       </>
     );
   };
@@ -255,11 +298,11 @@ export default function WeatherDashboard() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1"
           />
-          <Button type="submit" size="icon" disabled={loading || !searchQuery}>
-            {loading ? <Loader2 className="animate-spin" /> : <Search />}
+          <Button type="submit" size="icon" disabled={loading || loadingLocationDetails || !searchQuery}>
+            {(loading || loadingLocationDetails) ? <Loader2 className="animate-spin" /> : <Search />}
             <span className="sr-only">Search</span>
           </Button>
-          <Button type="button" size="icon" variant="outline" onClick={requestGeolocation} disabled={loading}>
+          <Button type="button" size="icon" variant="outline" onClick={requestGeolocation} disabled={loading || loadingLocationDetails}>
             <MapPin />
             <span className="sr-only">Use my location</span>
           </Button>

@@ -10,3 +10,8 @@ export interface WeatherData {
   humidity: number;
   isDay: number;
 }
+
+export interface LocationDetails {
+  description: string;
+  imageUrl: string;
+}
