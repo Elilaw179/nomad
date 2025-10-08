@@ -12,7 +12,7 @@ import type { LocationData, WeatherData, LocationDetails } from '@/lib/types';
 import { getWeatherInfo } from '@/lib/weather-utils';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-
+    
 const StatusDisplay = ({ icon, title, message, onRetry }: { icon: React.ElementType, title: string, message: string, onRetry?: () => void }) => (
     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-8 space-y-2">
         {React.createElement(icon, { className: "w-12 h-12 mb-4 text-destructive" })}
