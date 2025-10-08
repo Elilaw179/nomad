@@ -1,8 +1,9 @@
+import TeamSection from '@/components/team-section';
 import WeatherDashboard from '@/components/weather-dashboard';
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 md:p-8">
+    <main className="flex min-h-screen w-full flex-col items-center justify-start bg-background p-4 md:p-8 pt-12 md:pt-24">
       <div className="text-center mb-8">
         <h1 className="text-5xl font-bold font-headline text-foreground">
           GeoWeather
@@ -12,6 +13,7 @@ export default function Home() {
         </p>
       </div>
       <WeatherDashboard />
+      <TeamSection />
     </main>
   );
 }

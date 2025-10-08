@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "student-1",
+      "description": "Photo of a student contributor",
+      "imageUrl": "https://picsum.photos/seed/101/200/200",
+      "imageHint": "portrait person"
+    },
+    {
+      "id": "student-2",
+      "description": "Photo of a student contributor",
+      "imageUrl": "https://picsum.photos/seed/102/200/200",
+      "imageHint": "portrait person"
+    },
+    {
+      "id": "student-3",
+      "description": "Photo of a student contributor",
+      "imageUrl": "https://picsum.photos/seed/103/200/200",
+      "imageHint": "portrait person"
+    }
+  ]
 }
