@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { MapPin, Wind, Droplets, AlertCircle, Loader2, XCircle, Thermometer } from 'lucide-react';
+import { MapPin, Wind, Droplets, AlertCircle, Loader2, XCircle, Search } from 'lucide-react';
 import { intelligentWeatherAlerts } from '@/ai/flows/intelligent-weather-alerts';
 import type { LocationData, WeatherData } from '@/lib/types';
 import { getWeatherInfo } from '@/lib/weather-utils';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 
 const StatusDisplay = ({ icon, title, message, onRetry }: { icon: React.ElementType, title: string, message: string, onRetry?: () => void }) => (
     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-8 space-y-2">
@@ -27,6 +28,7 @@ export default function WeatherDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState<Date | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setDate(new Date());
@@ -35,7 +37,7 @@ export default function WeatherDashboard() {
   const handleGeoError = useCallback((error: GeolocationPositionError) => {
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        setError("Location access was denied. Please enable it in your browser settings to use this app.");
+        setError("Location access was denied. Please enable it in your browser settings or use the search bar.");
         break;
       case error.POSITION_UNAVAILABLE:
         setError("Your location information is currently unavailable.");
@@ -66,7 +68,7 @@ export default function WeatherDashboard() {
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
-      setError("Geolocation is not supported by your browser.");
+      setError("Geolocation is not supported by your browser. Please use the search bar.");
       setLoading(false);
     }
   }, [handleGeoError]);
@@ -75,11 +77,41 @@ export default function WeatherDashboard() {
     requestGeolocation();
   }, [requestGeolocation]);
 
+  const handleSearch = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery) return;
+    setLoading(true);
+    setError(null);
+    setWeatherData(null);
+    setLocationData(null);
+    setAiAlert(null);
+
+    try {
+      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${searchQuery}&count=1`);
+      if (!geoRes.ok) {
+        throw new Error("Failed to find location.");
+      }
+      const geoData = await geoRes.json();
+      if (!geoData.results || geoData.results.length === 0) {
+        setError(`Could not find a location named "${searchQuery}". Please try another search.`);
+        setLoading(false);
+        return;
+      }
+      const { latitude, longitude } = geoData.results[0];
+      setLocation({ lat: latitude, lon: longitude });
+    } catch (err) {
+      console.error(err);
+      setError("Failed to search for location. Please try again.");
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!location) return;
 
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
         const [locationRes, weatherRes] = await Promise.all([
           fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.lat}&longitude=${location.lon}&localityLanguage=en`),
@@ -148,7 +180,7 @@ export default function WeatherDashboard() {
       );
     }
 
-    if (error) {
+    if (error && !weatherData) {
         return <StatusDisplay icon={XCircle} title="An Error Occurred" message={error} onRetry={requestGeolocation} />;
     }
 
@@ -196,6 +228,16 @@ export default function WeatherDashboard() {
               </AlertDescription>
             </Alert>
           )}
+
+          {error && !loading && (
+             <Alert variant="destructive" className="mt-6 text-left">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Search Error</AlertTitle>
+              <AlertDescription>
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </>
     );
@@ -203,6 +245,25 @@ export default function WeatherDashboard() {
   
   return (
     <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border rounded-2xl overflow-hidden">
+      <div className="p-4 border-b">
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <Input 
+            type="search"
+            placeholder="Search for a city..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1"
+          />
+          <Button type="submit" size="icon" disabled={loading || !searchQuery}>
+            {loading ? <Loader2 className="animate-spin" /> : <Search />}
+            <span className="sr-only">Search</span>
+          </Button>
+          <Button type="button" size="icon" variant="outline" onClick={requestGeolocation} disabled={loading}>
+            <MapPin />
+            <span className="sr-only">Use my location</span>
+          </Button>
+        </form>
+      </div>
       {renderContent()}
     </Card>
   );
