@@ -5,14 +5,13 @@ import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { MapPin, Wind, Droplets, AlertCircle, Loader2, XCircle, Search } from 'lucide-react';
+import { MapPin, Wind, Droplets, AlertCircle, Loader2, XCircle, Search, Info } from 'lucide-react';
 import { intelligentWeatherAlerts } from '@/ai/flows/intelligent-weather-alerts';
 import { getLocationDetails } from '@/ai/flows/get-location-details';
 import type { LocationData, WeatherData, LocationDetails } from '@/lib/types';
 import { getWeatherInfo } from '@/lib/weather-utils';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import Image from 'next/image';
 
 const StatusDisplay = ({ icon, title, message, onRetry }: { icon: React.ElementType, title: string, message: string, onRetry?: () => void }) => (
     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-8 space-y-2">
@@ -31,7 +30,7 @@ export default function WeatherDashboard() {
   const [locationDetails, setLocationDetails] = useState<LocationDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingLocationDetails, setLoadingLocationDetails] = useState(false);
+  const [loadingAIData, setLoadingAIData] = useState(false);
   const [date, setDate] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -161,7 +160,7 @@ export default function WeatherDashboard() {
     };
 
     const fetchAIData = async (locationData: LocationData, weatherData: WeatherData) => {
-        setLoadingLocationDetails(true);
+        setLoadingAIData(true);
         try {
             const locationString = `${locationData.city}, ${locationData.countryName}`;
 
@@ -179,9 +178,8 @@ export default function WeatherDashboard() {
             setLocationDetails(locationDetailsResponse);
         } catch (e) {
             console.error("AI Error:", e);
-            // Don't set a user-facing error for AI failures, just log it.
         } finally {
-            setLoadingLocationDetails(false);
+            setLoadingAIData(false);
         }
     };
     
@@ -254,16 +252,6 @@ export default function WeatherDashboard() {
             </div>
           </div>
           
-          {aiAlert && (
-            <Alert className="mt-6 text-left bg-accent/10 border-accent/30 shadow-inner">
-              <AlertCircle className="h-4 w-4 text-accent" />
-              <AlertTitle className="text-accent font-bold font-headline">Intelligent Alert</AlertTitle>
-              <AlertDescription className="text-accent-foreground/80">
-                {aiAlert}
-              </AlertDescription>
-            </Alert>
-          )}
-
           {error && !loading && (
              <Alert variant="destructive" className="mt-6 text-left">
               <AlertCircle className="h-4 w-4" />
@@ -274,28 +262,33 @@ export default function WeatherDashboard() {
             </Alert>
           )}
         </CardContent>
-        <CardFooter className="flex-col p-0">
-          {loadingLocationDetails ? (
-            <div className="p-6 w-full space-y-4">
-                <Skeleton className="h-48 w-full rounded-lg"/>
-                <Skeleton className="h-6 w-1/4"/>
-                <Skeleton className="h-4 w-full"/>
-                <Skeleton className="h-4 w-5/6"/>
+        <CardFooter className="flex-col gap-4 p-4 pt-0">
+          {loadingAIData ? (
+            <div className="w-full space-y-4">
+                <Skeleton className="h-24 w-full rounded-lg"/>
+                <Skeleton className="h-24 w-full rounded-lg"/>
             </div>
-          ) : locationDetails && (
-            <div className="p-4 pt-0">
-              <Image 
-                src={locationDetails.imageUrl}
-                alt={`Image of ${locationData.city}`}
-                width={400}
-                height={250}
-                className="w-full h-auto rounded-lg object-cover mb-4 shadow-lg"
-              />
-              <div className="text-left">
-                <h4 className="font-bold text-lg text-foreground font-headline">About {locationData.city}</h4>
-                <p className="text-sm text-muted-foreground">{locationDetails.description}</p>
-              </div>
-            </div>
+          ) : (
+            <>
+              {aiAlert && (
+                <Alert className="text-left bg-accent/10 border-accent/30 shadow-inner w-full">
+                  <AlertCircle className="h-4 w-4 text-accent" />
+                  <AlertTitle className="text-accent font-bold font-headline">Intelligent Alert</AlertTitle>
+                  <AlertDescription className="text-accent-foreground/80">
+                    {aiAlert}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {locationDetails && (
+                <Alert className="text-left bg-blue-500/10 border-blue-500/30 shadow-inner w-full">
+                  <Info className="h-4 w-4 text-blue-500" />
+                  <AlertTitle className="text-blue-500 font-bold font-headline">About {locationData.city}</AlertTitle>
+                  <AlertDescription className="text-foreground/80">
+                    {locationDetails.description}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
           )}
         </CardFooter>
       </>
@@ -313,11 +306,11 @@ export default function WeatherDashboard() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1"
           />
-          <Button type="submit" size="icon" disabled={loading || loadingLocationDetails || !searchQuery}>
-            {(loading || loadingLocationDetails) ? <Loader2 className="animate-spin" /> : <Search />}
+          <Button type="submit" size="icon" disabled={loading || loadingAIData || !searchQuery}>
+            {(loading || loadingAIData) ? <Loader2 className="animate-spin" /> : <Search />}
             <span className="sr-only">Search</span>
           </Button>
-          <Button type="button" size="icon" variant="outline" onClick={requestGeolocation} disabled={loading || loadingLocationDetails}>
+          <Button type="button" size="icon" variant="outline" onClick={requestGeolocation} disabled={loading || loadingAIData}>
             <MapPin />
             <span className="sr-only">Use my location</span>
           </Button>

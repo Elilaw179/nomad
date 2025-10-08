@@ -13,5 +13,4 @@ export interface WeatherData {
 
 export interface LocationDetails {
   description: string;
-  imageUrl: string;
 }
