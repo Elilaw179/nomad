@@ -24,7 +24,7 @@ const HotelsSection = ({ locationData }: HotelsSectionProps) => {
           setHotels(response.hotels);
         })
         .catch(err => {
-          console.error("Failed to fetch hotels:", err);
+          // Fail silently on AI errors
           setHotels([]); // Set to empty array on error to stop loading
         })
         .finally(() => {
@@ -67,3 +67,5 @@ const HotelsSection = ({ locationData }: HotelsSectionProps) => {
 };
 
 export default HotelsSection;
+
+    

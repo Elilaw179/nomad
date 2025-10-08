@@ -96,7 +96,7 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
         setAiAlert(alertResponse.alertMessage);
         setLocationDetails(locationDetailsResponse);
       } catch (aiError) {
-        console.error("AI Data Fetch Error:", aiError);
+        // Fail silently on AI errors (e.g. rate limiting)
         setAiAlert(null);
         setLocationDetails(null);
       } finally {
@@ -119,14 +119,12 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setLocation({
+          const newLocation = {
             lat: position.coords.latitude,
             lon: position.coords.longitude,
-          });
-          fetchAllData({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude,
-          });
+          };
+          setLocation(newLocation);
+          fetchAllData(newLocation);
         },
         (error) => {
           let message = "An unknown error occurred while trying to get your location.";
@@ -305,3 +303,5 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
     </Card>
   );
 }
+
+    

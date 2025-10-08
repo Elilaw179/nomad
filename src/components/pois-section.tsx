@@ -31,7 +31,7 @@ const PoisSection = ({ locationData }: PoisSectionProps) => {
           setPois(response.pointsOfInterest);
         })
         .catch(err => {
-          console.error("Failed to fetch points of interest:", err);
+          // Fail silently on AI errors
           setPois([]); // Set to empty array on error to stop loading
         })
         .finally(() => {
@@ -87,3 +87,5 @@ const PoisSection = ({ locationData }: PoisSectionProps) => {
 };
 
 export default PoisSection;
+
+    
