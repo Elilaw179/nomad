@@ -22,7 +22,12 @@ const StatusDisplay = ({ icon, title, message, onRetry }: { icon: React.ElementT
     </div>
 );
 
-export default function WeatherDashboard() {
+type WeatherDashboardProps = {
+  onLocationChange: (location: { lat: number, lon: number } | null, locationData: LocationData | null, loading: boolean) => void;
+};
+
+
+export default function WeatherDashboard({ onLocationChange }: WeatherDashboardProps) {
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -54,11 +59,13 @@ export default function WeatherDashboard() {
         break;
     }
     setLoading(false);
-  }, []);
+    onLocationChange(null, null, false);
+  }, [onLocationChange]);
 
   const requestGeolocation = useCallback(() => {
     setLoading(true);
     setError(null);
+    onLocationChange(null, null, true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -74,8 +81,9 @@ export default function WeatherDashboard() {
     } else {
       setError("Geolocation is not supported by your browser. Please use the search bar.");
       setLoading(false);
+      onLocationChange(null, null, false);
     }
-  }, [handleGeoError]);
+  }, [handleGeoError, onLocationChange]);
   
   useEffect(() => {
     requestGeolocation();
@@ -86,6 +94,7 @@ export default function WeatherDashboard() {
     if (!searchQuery) return;
     setLoading(true);
     setError(null);
+    onLocationChange(null, null, true);
     setWeatherData(null);
     setLocationData(null);
     setAiAlert(null);
@@ -100,6 +109,7 @@ export default function WeatherDashboard() {
       if (!geoData.results || geoData.results.length === 0) {
         setError(`Could not find a location named "${searchQuery}". Please try another search.`);
         setLoading(false);
+        onLocationChange(null, null, false);
         return;
       }
       const { latitude, longitude } = geoData.results[0];
@@ -108,6 +118,7 @@ export default function WeatherDashboard() {
       console.error(err);
       setError("Failed to search for location. Please try again.");
       setLoading(false);
+      onLocationChange(null, null, false);
     }
   };
 
@@ -121,6 +132,7 @@ export default function WeatherDashboard() {
       setLocationData(null);
       setAiAlert(null);
       setLocationDetails(null);
+      onLocationChange(location, null, true);
 
       try {
         const [locationRes, weatherRes] = await Promise.all([
@@ -137,6 +149,8 @@ export default function WeatherDashboard() {
         
         const fetchedLocationData = { city: locData.city || locData.locality, countryName: locData.countryName };
         setLocationData(fetchedLocationData);
+        onLocationChange(location, fetchedLocationData, false);
+
 
         const current = weathData.current;
         const currentWeatherData: WeatherData = {
@@ -155,6 +169,7 @@ export default function WeatherDashboard() {
         console.error(e);
         setError("Could not fetch weather data. Please check your connection and try again.");
         setLoading(false);
+        onLocationChange(location, null, false);
         return null;
       }
     };
@@ -189,7 +204,7 @@ export default function WeatherDashboard() {
         }
     });
 
-  }, [location]);
+  }, [location, onLocationChange]);
 
   const renderContent = () => {
     if (loading) {

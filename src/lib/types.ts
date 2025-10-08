@@ -14,3 +14,9 @@ export interface WeatherData {
 export interface LocationDetails {
   description: string;
 }
+
+export interface Poi {
+  name: string;
+  type: 'Park' | 'Airport' | 'Market' | 'Landmark' | 'Attraction';
+  description: string;
+}
