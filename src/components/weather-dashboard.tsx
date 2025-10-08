@@ -93,7 +93,7 @@ export default function WeatherDashboard() {
     setLocationDetails(null);
 
     try {
-      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${searchQuery}&count=1`);
+      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery)}&count=1`);
       if (!geoRes.ok) {
         throw new Error("Failed to find location.");
       }
@@ -115,7 +115,7 @@ export default function WeatherDashboard() {
   useEffect(() => {
     if (!location) return;
 
-    const fetchData = async () => {
+    const fetchWeatherData = async () => {
       setLoading(true);
       setError(null);
       setWeatherData(null);
@@ -149,33 +149,48 @@ export default function WeatherDashboard() {
         };
         setWeatherData(currentWeatherData);
         setLoading(false);
-
-        setLoadingLocationDetails(true);
-        const locationString = `${fetchedLocationData.city}, ${fetchedLocationData.countryName}`;
-
-        const [alertResponse, locationDetailsResponse] = await Promise.all([
-            intelligentWeatherAlerts({
-                currentWeather: getWeatherInfo(currentWeatherData.weatherCode, currentWeatherData.isDay).description,
-                temperature: currentWeatherData.temperature,
-                historicalWeatherData: `The historical average temperature for ${locationString} this time of year is around ${Math.round(current.temperature_2m + (Math.random() - 0.5) * 5)}°C with variable cloudiness.`,
-                location: locationString
-            }),
-            getLocationDetails({ location: locationString })
-        ]);
-
-        setAiAlert(alertResponse.alertMessage);
-        setLocationDetails(locationDetailsResponse);
+        
+        return {locationData: fetchedLocationData, weatherData: currentWeatherData};
 
       } catch (e) {
         console.error(e);
         setError("Could not fetch weather data. Please check your connection and try again.");
         setLoading(false);
-      } finally {
-        setLoadingLocationDetails(false);
+        return null;
       }
     };
 
-    fetchData();
+    const fetchAIData = async (locationData: LocationData, weatherData: WeatherData) => {
+        setLoadingLocationDetails(true);
+        try {
+            const locationString = `${locationData.city}, ${locationData.countryName}`;
+
+            const [alertResponse, locationDetailsResponse] = await Promise.all([
+                intelligentWeatherAlerts({
+                    currentWeather: getWeatherInfo(weatherData.weatherCode, weatherData.isDay).description,
+                    temperature: weatherData.temperature,
+                    historicalWeatherData: `The historical average temperature for ${locationString} this time of year is around ${Math.round(weatherData.temperature + (Math.random() - 0.5) * 5)}°C with variable cloudiness.`,
+                    location: locationString
+                }),
+                getLocationDetails({ location: locationString })
+            ]);
+
+            setAiAlert(alertResponse.alertMessage);
+            setLocationDetails(locationDetailsResponse);
+        } catch (e) {
+            console.error("AI Error:", e);
+            // Don't set a user-facing error for AI failures, just log it.
+        } finally {
+            setLoadingLocationDetails(false);
+        }
+    };
+    
+    fetchWeatherData().then(data => {
+        if(data) {
+            fetchAIData(data.locationData, data.weatherData);
+        }
+    });
+
   }, [location]);
 
   const renderContent = () => {
