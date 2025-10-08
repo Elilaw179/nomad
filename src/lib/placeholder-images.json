@@ -1,6 +1,12 @@
 {
   "placeholderImages": [
     {
+      "id": "hero-background",
+      "description": "Abstract background image for hero section",
+      "imageUrl": "https://picsum.photos/seed/4/1200/800",
+      "imageHint": "weather abstract"
+    },
+    {
       "id": "student-1",
       "description": "Photo of a student contributor",
       "imageUrl": "https://picsum.photos/seed/101/200/200",
