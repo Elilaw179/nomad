@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import HeroSection from '@/components/hero-section';
 import TeamSection from '@/components/team-section';
 import WeatherDashboard from '@/components/weather-dashboard';
@@ -14,7 +14,7 @@ export default function Home() {
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const handleLocationChange = (
+  const handleLocationChange = useCallback((
     newLocation: { lat: number; lon: number } | null,
     newLocationData: LocationData | null,
     isLoading: boolean,
@@ -22,7 +22,7 @@ export default function Home() {
     setLocation(newLocation);
     setLocationData(newLocationData);
     setLoading(isLoading);
-  }
+  }, []);
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-start bg-background">
