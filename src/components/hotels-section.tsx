@@ -59,7 +59,7 @@ const HotelsSection = ({ locationData }: HotelsSectionProps) => {
           </ul>
         )}
         {!loading && (!hotels || hotels.length === 0) && (
-          <p className="text-muted-foreground text-center">No hotel information available for this location.</p>
+          <p className="text-muted-foreground text-center">Could not retrieve suggestions at this time.</p>
         )}
       </CardContent>
     </Card>
@@ -67,5 +67,3 @@ const HotelsSection = ({ locationData }: HotelsSectionProps) => {
 };
 
 export default HotelsSection;
-
-    
