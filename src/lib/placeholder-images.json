@@ -3,7 +3,7 @@
     {
       "id": "hero-background",
       "description": "Abstract background image for hero section",
-      "imageUrl": "https://picsum.photos/seed/4/1200/800",
+      "imageUrl": "kis.jpeg",
       "imageHint": "weather abstract"
     },
     {
