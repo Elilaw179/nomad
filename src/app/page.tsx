@@ -29,10 +29,10 @@ export default function Home() {
       <HeroSection />
       <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8 items-start p-4 md:p-8 -mt-24 z-20 max-w-7xl mx-auto">
         <div className="lg:col-span-1">
-          {loading && !locationData ? <Skeleton className="h-96 w-full" /> : <HotelsSection locationData={locationData} />}
+          <WeatherDashboard onLocationChange={handleLocationChange} />
         </div>
         <div className="lg:col-span-1">
-          <WeatherDashboard onLocationChange={handleLocationChange} />
+          {loading && !locationData ? <Skeleton className="h-96 w-full" /> : <HotelsSection locationData={locationData} />}
         </div>
         <div className="lg:col-span-1">
           {loading && !locationData ? <Skeleton className="h-96 w-full" /> : <PoisSection locationData={locationData} />}
