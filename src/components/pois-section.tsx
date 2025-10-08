@@ -31,7 +31,7 @@ const PoisSection = ({ locationData }: PoisSectionProps) => {
           setPois(response.pointsOfInterest);
         })
         .catch(err => {
-          console.error("Failed to fetch points of interest:", err);
+          // Fail silently on AI errors
           setPois([]); // Set to empty array on error to stop loading
         })
         .finally(() => {
@@ -79,7 +79,7 @@ const PoisSection = ({ locationData }: PoisSectionProps) => {
           </ul>
         )}
         {!loading && (!pois || pois.length === 0) && (
-          <p className="text-muted-foreground text-center">No points of interest found for this location.</p>
+          <p className="text-muted-foreground text-center">Could not retrieve suggestions at this time.</p>
         )}
       </CardContent>
     </Card>

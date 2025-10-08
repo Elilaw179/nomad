@@ -24,7 +24,7 @@ const HotelsSection = ({ locationData }: HotelsSectionProps) => {
           setHotels(response.hotels);
         })
         .catch(err => {
-          console.error("Failed to fetch hotels:", err);
+          // Fail silently on AI errors
           setHotels([]); // Set to empty array on error to stop loading
         })
         .finally(() => {
@@ -59,7 +59,7 @@ const HotelsSection = ({ locationData }: HotelsSectionProps) => {
           </ul>
         )}
         {!loading && (!hotels || hotels.length === 0) && (
-          <p className="text-muted-foreground text-center">No hotel information available for this location.</p>
+          <p className="text-muted-foreground text-center">Could not retrieve suggestions at this time.</p>
         )}
       </CardContent>
     </Card>

@@ -28,14 +28,14 @@ export default function Home() {
     <main className="flex min-h-screen w-full flex-col items-center justify-start bg-background">
       <HeroSection />
       <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8 items-start p-4 md:p-8 -mt-24 z-20 max-w-7xl mx-auto">
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 h-full">
           <WeatherDashboard onLocationChange={handleLocationChange} />
         </div>
-        <div className="lg:col-span-1">
-          {loading && !locationData ? <Skeleton className="h-96 w-full" /> : <HotelsSection locationData={locationData} />}
+        <div className="lg:col-span-1 h-full">
+          {loading ? <Skeleton className="h-96 w-full" /> : <HotelsSection locationData={locationData} />}
         </div>
-        <div className="lg:col-span-1">
-          {loading && !locationData ? <Skeleton className="h-96 w-full" /> : <PoisSection locationData={locationData} />}
+        <div className="lg:col-span-1 h-full">
+          {loading ? <Skeleton className="h-96 w-full" /> : <PoisSection locationData={locationData} />}
         </div>
       </div>
       <div className="w-full flex flex-col items-center p-4 md:p-8 z-20">
