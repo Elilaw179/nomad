@@ -17,18 +17,23 @@ const getImageData = (id: string) => {
 
 export const teamMembers: TeamMember[] = [
   {
-    name: 'Alex Johnson',
-    role: 'Lead Developer',
+    name: 'Engr.Law',
+    role: 'Coding Teacher',
     ...getImageData('student-1'),
   },
   {
-    name: 'Maria Garcia',
-    role: 'UI/UX Designer',
+    name: 'Engr.Manny',
+    role: 'Database Teacher',
     ...getImageData('student-2'),
   },
   {
-    name: 'Sam Lee',
-    role: 'AI Specialist',
+    name: 'Engr.Monday',
+    role: 'ICT Teacher',
     ...getImageData('student-3'),
+  },
+  {
+    name: 'Engr.Solomon',
+    role: 'ICT Supervisor',
+    ...getImageData('student-4'),
   },
 ];

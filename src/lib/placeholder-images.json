@@ -9,19 +9,25 @@
     {
       "id": "student-1",
       "description": "Photo of a student contributor",
-      "imageUrl": "https://picsum.photos/seed/101/200/200",
+      "imageUrl": "eli.jpg",
       "imageHint": "portrait person"
     },
     {
       "id": "student-2",
       "description": "Photo of a student contributor",
-      "imageUrl": "https://picsum.photos/seed/102/200/200",
+      "imageUrl": "manny.jpeg",
       "imageHint": "portrait person"
     },
     {
       "id": "student-3",
       "description": "Photo of a student contributor",
-      "imageUrl": "https://picsum.photos/seed/103/200/200",
+      "imageUrl": "",
+      "imageHint": "portrait person"
+    },
+    {
+      "id": "student-4",
+      "description": "Photo of a student contributor",
+      "imageUrl": "solo.jpeg",
       "imageHint": "portrait person"
     }
   ]

@@ -195,7 +195,7 @@ export default function WeatherDashboard({ onLocationChange }: WeatherDashboardP
     };
     
     setWeatherData(null);
-    setLocationData(null);
+    setLocationData(null);  
     setAiAlert(null);
     setLocationDetails(null);
     fetchWeatherData().then(data => {
