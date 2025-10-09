@@ -38,7 +38,7 @@ export const teamMembers: TeamMember[] = [
   },
   {
     name: 'Champions',
-    role: 'Year 9 Students',
+    role: 'Year-9 Students',
     ...getImageData('student-5'),
   },
 ];
