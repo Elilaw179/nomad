@@ -22,8 +22,8 @@ export const teamMembers: TeamMember[] = [
     ...getImageData('student-1'),
   },
   {
-    name: 'Engr.Manny',
-    role: 'Database Teacher',
+    name: 'Mr.Manny',
+    role: 'Class Teacher',
     ...getImageData('student-2'),
   },
   {
@@ -37,8 +37,8 @@ export const teamMembers: TeamMember[] = [
     ...getImageData('student-4'),
   },
   {
-    name: 'Year 9 Students',
-    role: 'Learners',
+    name: 'Champions',
+    role: 'Year 9 Students',
     ...getImageData('student-5'),
   },
 ];
