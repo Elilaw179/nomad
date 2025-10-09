@@ -36,4 +36,9 @@ export const teamMembers: TeamMember[] = [
     role: 'ICT Supervisor',
     ...getImageData('student-4'),
   },
+  {
+    name: 'Year 9 Students',
+    role: 'Learners',
+    ...getImageData('student-5'),
+  },
 ];

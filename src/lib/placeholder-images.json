@@ -27,7 +27,13 @@
     {
       "id": "student-4",
       "description": "Photo of a student contributor",
-      "imageUrl": "solo.jpeg",
+      "imageUrl": "sol.jpeg",
+      "imageHint": "portrait person"
+    },
+    {
+      "id": "student-5",
+      "description": "Photo of a student contributor",
+      "imageUrl": "kis.jpeg",
       "imageHint": "portrait person"
     }
   ]
